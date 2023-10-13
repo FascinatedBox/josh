@@ -2,6 +2,7 @@ use lexer::Lexer;
 use std::fs::File;
 use std::io::Read;
 use std::vec::Vec;
+use token::Token;
 
 pub struct Parser {
     files: Vec<Lexer>,
@@ -30,6 +31,15 @@ impl Parser {
     }
 
     pub fn parse(&mut self) {
-        // todo: Parse josh code.
+        let mut lexer = self.files.pop().unwrap();
+
+        loop {
+            let token = lexer.next_token();
+
+            match token.kind {
+                Token::EndOfFile => break,
+                _ => (),
+            }
+        }
     }
 }

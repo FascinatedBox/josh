@@ -1,5 +1,7 @@
 mod lexer;
+mod lexer_data;
 mod parser;
+mod token;
 use parser::Parser;
 use std::env;
 
