@@ -71,7 +71,7 @@ impl Lexer {
                 }
                 '\n' => {
                     self.offset += 1;
-                    continue;
+                    tok = Token::Newline;
                 }
                 _ => (),
             }

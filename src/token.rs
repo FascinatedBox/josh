@@ -9,4 +9,5 @@ pub enum Token {
     Identifier,
     Invalid,
     EndOfFile,
+    Newline,
 }
