@@ -1,3 +1,4 @@
+use expr::Expr;
 use lexer::Lexer;
 use std::fs::File;
 use std::io::Read;
@@ -6,6 +7,61 @@ use token::Token;
 
 pub struct Parser {
     files: Vec<Lexer>,
+}
+
+struct ParseState<'a> {
+    lexer: &'a mut Lexer,
+}
+
+impl<'a> ParseState<'a> {
+    pub fn parse_ident_exec(&mut self) -> Expr {
+        let mut words: Vec<Expr> = Vec::new();
+        let ident = self.lexer.current_ident();
+
+        words.push(Expr::String(ident));
+
+        loop {
+            let token = &self.lexer.next();
+
+            match token.kind {
+                Token::EndOfFile | Token::Newline => break,
+                Token::Identifier => {
+                    let ident = self.lexer.current_ident();
+
+                    words.push(Expr::String(ident));
+                }
+                _ => (),
+            }
+        }
+
+        Expr::Command(words)
+    }
+
+    pub fn parse_identifier(&mut self) -> Expr {
+        self.parse_ident_exec()
+    }
+
+    pub fn parse(&mut self) -> Vec<Expr> {
+        self.lexer.next();
+
+        let mut statements: Vec<Expr> = Vec::new();
+
+        loop {
+            match &self.lexer.peek_kind() {
+                Token::EndOfFile => break,
+                Token::Newline => {
+                    self.lexer.next();
+                }
+                Token::Identifier => {
+                    statements.push(self.parse_identifier());
+                    continue;
+                }
+                _ => (),
+            }
+        }
+
+        statements
+    }
 }
 
 impl Parser {
@@ -30,16 +86,10 @@ impl Parser {
         self.files.push(lexer);
     }
 
-    pub fn parse(&mut self) {
+    pub fn parse(&mut self) -> Vec<Expr> {
         let mut lexer = self.files.pop().unwrap();
+        let mut state = ParseState { lexer: &mut lexer };
 
-        loop {
-            let token = lexer.next_token();
-
-            match token.kind {
-                Token::EndOfFile => break,
-                _ => (),
-            }
-        }
+        state.parse()
     }
 }

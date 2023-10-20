@@ -4,6 +4,7 @@ use token::{SpannedToken, Token};
 pub struct Lexer {
     bytes: Vec<u8>,
     text: String,
+    token: SpannedToken,
     offset: usize,
 }
 
@@ -12,7 +13,7 @@ impl Lexer {
         let mut bytes = text.as_bytes().to_vec();
 
         if bytes[bytes.len() - 1] != '\n' as u8 {
-            // Prevent next_token from reading too far by making sure there's a
+            // Prevent next from reading too far by making sure there's a
             // newline to act as a fence at the end.
             bytes.push('\n' as u8);
         }
@@ -21,10 +22,19 @@ impl Lexer {
             bytes: bytes,
             offset: 0,
             text: text,
+            token: SpannedToken {
+                kind: Token::Invalid,
+                start: 0,
+                len: 0,
+            },
         }
     }
 
-    pub fn identifier_for(&self, token: SpannedToken) -> String {
+    pub fn current_ident(&self) -> String {
+        self.identifier_for(&self.token)
+    }
+
+    pub fn identifier_for(&self, token: &SpannedToken) -> String {
         match token.kind {
             Token::Identifier => {
                 let start = token.start as usize;
@@ -36,14 +46,20 @@ impl Lexer {
         }
     }
 
-    pub fn next_token(&mut self) -> SpannedToken {
+    pub fn peek_kind(&self) -> &Token {
+        &self.token.kind
+    }
+
+    pub fn next(&mut self) -> &SpannedToken {
         loop {
             if self.offset >= self.bytes.len() {
-                return SpannedToken {
+                self.token = SpannedToken {
                     kind: Token::EndOfFile,
                     start: self.offset as u32,
                     len: 0,
                 };
+
+                return &self.token;
             }
 
             let mut ch = self.bytes[self.offset];
@@ -76,11 +92,13 @@ impl Lexer {
                 _ => (),
             }
 
-            return SpannedToken {
+            self.token = SpannedToken {
                 kind: tok,
                 start: start as u32,
                 len: (self.offset - start) as u32,
             };
+
+            return &self.token;
         }
     }
 }
