@@ -1,4 +1,4 @@
-use expr::Expr;
+use ast::{Expr, Stmt};
 use lexer::Lexer;
 use std::fs::File;
 use std::io::Read;
@@ -14,7 +14,7 @@ struct ParseState<'a> {
 }
 
 impl<'a> ParseState<'a> {
-    pub fn parse_ident_exec(&mut self) -> Expr {
+    pub fn parse_ident_exec(&mut self) -> Stmt {
         let mut words: Vec<Expr> = Vec::new();
         let ident = self.lexer.current_ident();
 
@@ -34,17 +34,17 @@ impl<'a> ParseState<'a> {
             }
         }
 
-        Expr::Command(words)
+        Stmt::Expr(Expr::Command(words))
     }
 
-    pub fn parse_identifier(&mut self) -> Expr {
+    pub fn parse_identifier(&mut self) -> Stmt {
         self.parse_ident_exec()
     }
 
-    pub fn parse(&mut self) -> Vec<Expr> {
+    pub fn parse(&mut self) -> Vec<Stmt> {
         self.lexer.next();
 
-        let mut statements: Vec<Expr> = Vec::new();
+        let mut statements: Vec<Stmt> = Vec::new();
 
         loop {
             match &self.lexer.peek_kind() {
@@ -86,7 +86,7 @@ impl Parser {
         self.files.push(lexer);
     }
 
-    pub fn parse(&mut self) -> Vec<Expr> {
+    pub fn parse(&mut self) -> Vec<Stmt> {
         let mut lexer = self.files.pop().unwrap();
         let mut state = ParseState { lexer: &mut lexer };
 

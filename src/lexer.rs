@@ -85,6 +85,10 @@ impl Lexer {
 
                     tok = Token::Identifier;
                 }
+                '=' => {
+                    self.offset += 1;
+                    tok = Token::Eq;
+                }
                 '\n' => {
                     self.offset += 1;
                     tok = Token::Newline;

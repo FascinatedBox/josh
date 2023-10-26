@@ -1,5 +1,7 @@
+mod ast;
 mod emitter;
-mod expr;
+mod eval_expr;
+mod eval_stmt;
 mod interpreter;
 mod lexer;
 mod lexer_data;
