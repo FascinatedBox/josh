@@ -4,7 +4,7 @@ pub struct SpannedToken {
     pub len: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Identifier,
     Invalid,

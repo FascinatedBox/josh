@@ -20,6 +20,6 @@ impl Emitter {
 
     pub fn write_string(&mut self, str: &String) -> u16 {
         self.vm.strings.push(str.into());
-        self.vm.strings.len() as u16
+        (self.vm.strings.len() - 1) as u16
     }
 }

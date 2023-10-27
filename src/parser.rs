@@ -3,7 +3,7 @@ use lexer::Lexer;
 use std::fs::File;
 use std::io::Read;
 use std::vec::Vec;
-use token::Token;
+use token::{SpannedToken, Token};
 
 pub struct Parser {
     files: Vec<Lexer>,
@@ -11,22 +11,27 @@ pub struct Parser {
 
 struct ParseState<'a> {
     lexer: &'a mut Lexer,
+    token: SpannedToken,
 }
 
 impl<'a> ParseState<'a> {
+    pub fn current_ident(&self) -> String {
+        self.lexer.identifier_for(&self.token)
+    }
+
     pub fn parse_ident_exec(&mut self) -> Stmt {
         let mut words: Vec<Expr> = Vec::new();
-        let ident = self.lexer.current_ident();
+        let ident = self.current_ident();
 
         words.push(Expr::String(ident));
 
         loop {
-            let token = &self.lexer.next();
+            self.token = self.lexer.next();
 
-            match token.kind {
+            match self.token.kind {
                 Token::EndOfFile | Token::Newline => break,
                 Token::Identifier => {
-                    let ident = self.lexer.current_ident();
+                    let ident = self.current_ident();
 
                     words.push(Expr::String(ident));
                 }
@@ -42,15 +47,15 @@ impl<'a> ParseState<'a> {
     }
 
     pub fn parse(&mut self) -> Vec<Stmt> {
-        self.lexer.next();
+        self.token = self.lexer.next();
 
         let mut statements: Vec<Stmt> = Vec::new();
 
         loop {
-            match &self.lexer.peek_kind() {
+            match &self.token.kind {
                 Token::EndOfFile => break,
                 Token::Newline => {
-                    self.lexer.next();
+                    self.token = self.lexer.next();
                 }
                 Token::Identifier => {
                     statements.push(self.parse_identifier());
@@ -88,7 +93,14 @@ impl Parser {
 
     pub fn parse(&mut self) -> Vec<Stmt> {
         let mut lexer = self.files.pop().unwrap();
-        let mut state = ParseState { lexer: &mut lexer };
+        let mut state = ParseState {
+            lexer: &mut lexer,
+            token: SpannedToken {
+                kind: Token::Invalid,
+                start: 0,
+                len: 0,
+            },
+        };
 
         state.parse()
     }

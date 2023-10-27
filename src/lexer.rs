@@ -4,7 +4,6 @@ use token::{SpannedToken, Token};
 pub struct Lexer {
     bytes: Vec<u8>,
     text: String,
-    token: SpannedToken,
     offset: usize,
 }
 
@@ -22,16 +21,7 @@ impl Lexer {
             bytes: bytes,
             offset: 0,
             text: text,
-            token: SpannedToken {
-                kind: Token::Invalid,
-                start: 0,
-                len: 0,
-            },
         }
-    }
-
-    pub fn current_ident(&self) -> String {
-        self.identifier_for(&self.token)
     }
 
     pub fn identifier_for(&self, token: &SpannedToken) -> String {
@@ -46,20 +36,14 @@ impl Lexer {
         }
     }
 
-    pub fn peek_kind(&self) -> &Token {
-        &self.token.kind
-    }
-
-    pub fn next(&mut self) -> &SpannedToken {
+    pub fn next(&mut self) -> SpannedToken {
         loop {
             if self.offset >= self.bytes.len() {
-                self.token = SpannedToken {
+                return SpannedToken {
                     kind: Token::EndOfFile,
                     start: self.offset as u32,
                     len: 0,
                 };
-
-                return &self.token;
             }
 
             let mut ch = self.bytes[self.offset];
@@ -96,13 +80,11 @@ impl Lexer {
                 _ => (),
             }
 
-            self.token = SpannedToken {
+            return SpannedToken {
                 kind: tok,
                 start: start as u32,
                 len: (self.offset - start) as u32,
             };
-
-            return &self.token;
         }
     }
 }
