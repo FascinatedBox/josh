@@ -6,6 +6,7 @@ mod interpreter;
 mod lexer;
 mod lexer_data;
 mod opcodes;
+mod parse_expr;
 mod parser;
 mod token;
 mod vm;

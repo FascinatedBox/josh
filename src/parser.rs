@@ -1,5 +1,6 @@
 use ast::{Expr, Stmt};
 use lexer::Lexer;
+use parse_expr::parse_expr;
 use std::fs::File;
 use std::io::Read;
 use std::vec::Vec;
@@ -9,8 +10,8 @@ pub struct Parser {
     files: Vec<Lexer>,
 }
 
-struct ParseState<'a> {
-    lexer: &'a mut Lexer,
+pub struct ParseState<'a> {
+    pub lexer: &'a mut Lexer,
     token: SpannedToken,
 }
 
@@ -42,8 +43,36 @@ impl<'a> ParseState<'a> {
         Stmt::Expr(Expr::Command(words))
     }
 
+    pub fn expect_next_ident(&mut self) -> String {
+        self.token = self.lexer.next();
+
+        match self.token.kind {
+            Token::Identifier => self.current_ident(),
+            _ => panic!("Expected identifier after 'var' keyword."),
+        }
+    }
+
+    pub fn parse_var(&mut self) -> Stmt {
+        let name = self.expect_next_ident();
+
+        self.lexer.next();
+
+        let expr = parse_expr(self);
+
+        Stmt::Var(name, expr)
+    }
+
     pub fn parse_identifier(&mut self) -> Stmt {
-        self.parse_ident_exec()
+        let ident = self.current_ident();
+
+        if ident.len() > 8 {
+            return self.parse_ident_exec();
+        }
+
+        match ident.as_ref() {
+            "var" => self.parse_var(),
+            _ => self.parse_ident_exec(),
+        }
     }
 
     pub fn parse(&mut self) -> Vec<Stmt> {

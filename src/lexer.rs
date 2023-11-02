@@ -36,6 +36,18 @@ impl Lexer {
         }
     }
 
+    pub fn peek(&mut self) -> SpannedToken {
+        let save_offset = self.offset;
+        let result = self.next();
+
+        self.offset = save_offset;
+        result
+    }
+
+    pub fn advance(&mut self, token: &SpannedToken) {
+        self.offset = (token.start + token.len) as usize;
+    }
+
     pub fn next(&mut self) -> SpannedToken {
         loop {
             if self.offset >= self.bytes.len() {
@@ -69,9 +81,29 @@ impl Lexer {
 
                     tok = Token::Identifier;
                 }
+                '0'..='9' => {
+                    self.offset += 1;
+                    tok = Token::Number((ch - b'0') as i64);
+                }
+                '/' => {
+                    self.offset += 1;
+                    tok = Token::Divide;
+                }
                 '=' => {
                     self.offset += 1;
                     tok = Token::Eq;
+                }
+                '-' => {
+                    self.offset += 1;
+                    tok = Token::Minus;
+                }
+                '*' => {
+                    self.offset += 1;
+                    tok = Token::Multiply;
+                }
+                '+' => {
+                    self.offset += 1;
+                    tok = Token::Plus;
                 }
                 '\n' => {
                     self.offset += 1;

@@ -6,9 +6,14 @@ pub struct SpannedToken {
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
-    Identifier,
-    Invalid,
+    Divide,
     EndOfFile,
     Eq,
+    Identifier,
+    Invalid,
+    Minus,
+    Multiply,
     Newline,
+    Number(i64),
+    Plus,
 }
