@@ -1,6 +1,20 @@
 use opcodes::*;
 use std::process::Command;
 
+macro_rules! arith_op {
+    ($self:ident, $pos:ident, $b:tt) => {
+        let left_pos = $self.bytecode[$pos + 1] as usize;
+        let left = $self.values[left_pos].as_integer();
+        let right_pos = $self.bytecode[$pos + 2] as usize;
+        let right = $self.values[right_pos].as_integer();
+        let total_pos = $self.bytecode[$pos + 3] as usize;
+        let total = VmValue::VmInteger(left $b right);
+
+        _ = std::mem::replace(&mut $self.values[total_pos], total);
+        $pos += 4;
+    };
+}
+
 #[derive(Clone)]
 pub enum VmValue {
     VmInteger(i64),
@@ -86,15 +100,7 @@ impl Vm {
                     pos += 3;
                 }
                 OP_PLUS => {
-                    let left_pos = self.bytecode[pos + 1] as usize;
-                    let left = self.values[left_pos].as_integer();
-                    let right_pos = self.bytecode[pos + 2] as usize;
-                    let right = self.values[right_pos].as_integer();
-                    let total_pos = self.bytecode[pos + 3] as usize;
-                    let total = VmValue::VmInteger(left + right);
-
-                    _ = std::mem::replace(&mut self.values[total_pos], total);
-                    pos += 4
+                    arith_op!(self, pos, +);
                 }
                 _ => panic!("Unknown opcode {:?}.", op),
             }
