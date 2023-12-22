@@ -1,6 +1,5 @@
 use emitter::Emitter;
 use eval_stmt::eval_stmt;
-use opcodes::*;
 use parser::Parser;
 
 pub struct Interpreter {}
@@ -26,7 +25,9 @@ impl Interpreter {
             eval_stmt(&mut emitter, s);
         }
 
-        emitter.write_1(OP_RETURN_FROM_VM);
+        let main_sym = emitter.finish_main();
+
+        emitter.vm.load_func(main_sym);
         emitter.vm.exec();
     }
 }
