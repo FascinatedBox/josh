@@ -1,6 +1,7 @@
 use emitter::Emitter;
 use eval_stmt::eval_stmt;
 use parser::Parser;
+use vm::Vm;
 
 pub struct Interpreter {}
 
@@ -25,9 +26,9 @@ impl Interpreter {
             eval_stmt(&mut emitter, s);
         }
 
-        let main_sym = emitter.finish_main();
+        let main_func = emitter.prepare_main();
+        let mut vm = Vm::new(main_func);
 
-        emitter.vm.load_func(main_sym);
-        emitter.vm.exec();
+        vm.exec();
     }
 }

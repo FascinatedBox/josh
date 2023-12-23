@@ -4,15 +4,14 @@ use value::*;
 
 macro_rules! arith_op {
     ($self:ident, $bytecode:ident, $pos:ident, $b:tt) => {
-        let left_pos = $bytecode[$pos + 1] as usize;
-        let left = $self.values[left_pos].as_integer();
-        let right_pos = $bytecode[$pos + 2] as usize;
-        let right = $self.values[right_pos].as_integer();
-        let total_pos = $bytecode[$pos + 3] as usize;
+        let left_pos = $self.next_op() as usize;
+        let left = $self.regs[left_pos].as_integer();
+        let right_pos = $self.next_op() as usize;
+        let right = $self.regs[right_pos].as_integer();
+        let total_pos = $self.next_op() as usize;
         let total = VmValue::VmInteger(left $b right);
 
-        _ = std::mem::replace(&mut $self.values[total_pos], total);
-        $pos += 4;
+        _ = std::mem::replace(&mut $self.regs[total_pos], total);
     };
 }
 
@@ -22,40 +21,38 @@ pub struct VmFrame {
 }
 
 pub struct Vm {
-    pub strings: Vec<String>,
-    pub numbers: Vec<i64>,
-    pub values: Vec<VmValue>,
+    pub regs: Vec<VmValue>,
     pub call_stack: Vec<VmFrame>,
-    pub call_stack_pos: u16,
+    pub current_frame: VmFrame,
+    pub bytecode_pos: u16,
 }
 
 impl Vm {
-    pub fn new() -> Vm {
+    pub fn new(main_func: FuncValue) -> Vm {
         Vm {
-            numbers: Vec::new(),
-            strings: Vec::new(),
-            values: Vec::new(),
+            regs: Vec::new(),
             call_stack: Vec::new(),
-            call_stack_pos: 0,
+            current_frame: VmFrame {
+                code_pos: 0,
+                func: main_func,
+            },
+            bytecode_pos: 0,
         }
     }
 
-    fn exec_command(&self, frame: &VmFrame, pos: &mut usize) {
-        let bytecode = &frame.func.bytecode;
-
-        *pos += 1;
-        let count = bytecode[*pos] - 1;
-
-        *pos += 1;
-        let program = &self.strings[bytecode[*pos] as usize];
-        *pos += 1;
-        let mut args: Vec<&String> = Vec::new();
+    fn exec_command(&mut self) {
+        let count = self.next_op() - 1;
+        let idx = self.next_op() as usize;
+        let mut cmd = Command::new(&self.current_frame.func.strings[idx]);
+        let mut args: Vec<String> = Vec::new();
 
         for _i in 0..count {
-            args.push(&self.strings[bytecode[*pos] as usize]);
+            let j = self.next_op() as usize;
+            let s = &self.current_frame.func.strings[j];
+            args.push(s.to_string());
         }
 
-        let child_result = Command::new(program).args(args).spawn();
+        let child_result = cmd.args(args).spawn();
         match child_result {
             Ok(mut child) => match child.wait() {
                 Ok(_) => (),
@@ -65,46 +62,40 @@ impl Vm {
         }
     }
 
-    pub fn load_func(&mut self, func: FuncValue) {
-        self.call_stack.push(VmFrame {
-            func: func,
-            code_pos: 0,
-        })
+    fn next_op(&mut self) -> u16 {
+        let result = self.current_frame.func.bytecode[self.bytecode_pos as usize];
+
+        self.bytecode_pos += 1;
+        result
     }
 
     pub fn exec(&mut self) {
-        let mut pos = 0 as usize;
-
         for _i in 0..=10 {
-            self.values.push(VmValue::VmEmpty);
+            self.regs.push(VmValue::VmEmpty);
         }
 
-        let current_frame = &self.call_stack[0];
-        let bytecode = &current_frame.func.bytecode;
-
         loop {
-            let op = bytecode[pos];
+            let op = self.next_op();
 
             match op {
                 OP_ASSIGN => {
-                    let left_pos = bytecode[pos + 1] as usize;
-                    let right_pos = bytecode[pos + 2] as usize;
-                    let right = self.values[right_pos].clone();
+                    let left_pos = self.next_op() as usize;
+                    let right_pos = self.next_op() as usize;
+                    let right = self.regs[right_pos].clone();
 
-                    _ = std::mem::replace(&mut self.values[left_pos], right);
-                    pos += 3;
+                    _ = std::mem::replace(&mut self.regs[left_pos], right);
                 }
-                OP_COMMAND => self.exec_command(current_frame, &mut pos),
+                OP_COMMAND => self.exec_command(),
                 OP_RETURN_FROM_VM => break,
                 OP_LOAD_INTEGER => {
-                    let num_pos = bytecode[pos + 1];
-                    let storage_id = bytecode[pos + 2] as usize;
-                    let num = self.numbers[num_pos as usize];
+                    let num_pos = self.next_op();
+                    let storage_id = self.next_op() as usize;
+                    let num = self.current_frame.func.numbers[num_pos as usize];
 
-                    self.values[storage_id as usize] = VmValue::VmInteger(num);
-                    pos += 3;
+                    self.regs[storage_id as usize] = VmValue::VmInteger(num);
                 }
                 OP_PLUS => {
+                    self.exec();
                     arith_op!(self, bytecode, pos, +);
                 }
                 _ => panic!("Unknown opcode {:?}.", op),

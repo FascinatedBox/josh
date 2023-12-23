@@ -1,6 +1,8 @@
 pub struct FuncValue {
     pub bytecode: Vec<u16>,
     pub name: String,
+    pub numbers: Vec<i64>,
+    pub strings: Vec<String>,
 }
 
 #[derive(Clone)]

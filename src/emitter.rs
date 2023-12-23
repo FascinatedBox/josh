@@ -3,7 +3,6 @@ use eval_expr::eval_expr_for_value;
 use opcodes::*;
 use std::collections::HashMap;
 use value::FuncValue;
-use vm::Vm;
 
 pub struct EmitStorage {
     pub expr_id: u16,
@@ -12,16 +11,22 @@ pub struct EmitStorage {
 
 pub struct FuncBlock {
     pub code_start: u16,
+    pub number_count: u16,
+    pub string_count: u16,
 }
 
 pub struct Emitter {
     pub bytecode: Vec<u16>,
+    pub saved_numbers: Vec<i64>,
+    pub saved_strings: Vec<String>,
+
     pub func_blocks: Vec<FuncBlock>,
-    pub vm: Vm,
+    pub numbers: Vec<i64>,
     pub locals: HashMap<String, u16>,
     pub storages: Vec<EmitStorage>,
     pub next_sym_id: u16,
     pub expr_id: u16,
+    pub func_block: FuncBlock,
 }
 
 impl Emitter {
@@ -29,11 +34,18 @@ impl Emitter {
         Emitter {
             bytecode: Vec::new(),
             expr_id: 1,
-            func_blocks: vec![FuncBlock { code_start: 0 }],
+            saved_numbers: Vec::new(),
+            saved_strings: Vec::new(),
+            numbers: Vec::new(),
+            func_blocks: Vec::new(),
             locals: HashMap::new(),
             storages: Vec::new(),
             next_sym_id: 1,
-            vm: Vm::new(),
+            func_block: FuncBlock {
+                code_start: 0,
+                number_count: 0,
+                string_count: 0,
+            },
         }
     }
 
@@ -98,13 +110,20 @@ impl Emitter {
     }
 
     pub fn write_number(&mut self, n: &i64) -> u16 {
-        self.vm.numbers.push(*n);
-        (self.vm.numbers.len() - 1) as u16
+        let result = self.func_block.number_count;
+
+        self.numbers.push(*n);
+        self.func_block.number_count += 1;
+
+        result
     }
 
     pub fn write_string(&mut self, str: &String) -> u16 {
-        self.vm.strings.push(str.into());
-        (self.vm.strings.len() - 1) as u16
+        let result = self.func_block.string_count;
+
+        self.saved_strings.push(str.into());
+        self.func_block.string_count += 1;
+        result
     }
 
     pub fn eval_expr(&mut self, expr: &Expr) -> u16 {
@@ -114,12 +133,14 @@ impl Emitter {
         sym.reg
     }
 
-    pub fn finish_main(&mut self) -> FuncValue {
+    pub fn prepare_main(&mut self) -> FuncValue {
         self.write_1(OP_RETURN_FROM_VM);
 
         FuncValue {
             bytecode: self.bytecode.split_off(0),
             name: "main".to_string(),
+            numbers: self.numbers.split_off(0),
+            strings: self.saved_strings.split_off(0),
         }
     }
 }
