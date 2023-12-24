@@ -6,7 +6,7 @@ fn eval_var(emitter: &mut Emitter, name: String, expr: Expr) {
     let var_id = emitter.declare_local(name);
     let expr_value = emitter.eval_expr(&expr);
 
-    emitter.write_3(OP_ASSIGN, var_id, expr_value);
+    ::emit_n!(emitter, OP_ASSIGN, var_id, expr_value);
 }
 
 pub fn eval_stmt(emitter: &mut Emitter, stmt: Stmt) {

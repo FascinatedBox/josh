@@ -7,12 +7,12 @@ pub struct TypedValue {
 }
 
 fn expr_command(emitter: &mut Emitter, trees: &Vec<Expr>) -> TypedValue {
-    emitter.write_2(OP_COMMAND, trees.len() as u16);
+    ::emit_n!(emitter, OP_COMMAND, trees.len() as u16);
 
     for t in trees {
         let value = eval_expr_for_value(emitter, t);
 
-        emitter.write_1(value.reg);
+        ::emit_n!(emitter, value.reg);
     }
 
     TypedValue { reg: 0 }
@@ -22,7 +22,7 @@ fn expr_number(emitter: &mut Emitter, n: &i64) -> TypedValue {
     let pos = emitter.write_number(n);
     let storage_id = emitter.get_storage_id();
 
-    emitter.write_3(OP_LOAD_INTEGER, pos, storage_id);
+    ::emit_n!(emitter, OP_LOAD_INTEGER, pos, storage_id);
 
     TypedValue { reg: storage_id }
 }
@@ -32,7 +32,7 @@ fn expr_plus(emitter: &mut Emitter, left: &Expr, right: &Expr) -> TypedValue {
     let right = eval_expr_for_value(emitter, right);
     let storage_id = emitter.get_storage_id();
 
-    emitter.write_4(OP_PLUS, left.reg, right.reg, storage_id);
+    ::emit_n!(emitter, OP_PLUS, left.reg, right.reg, storage_id);
 
     TypedValue { reg: storage_id }
 }

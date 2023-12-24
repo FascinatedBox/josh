@@ -29,6 +29,15 @@ pub struct Emitter {
     pub func_block: FuncBlock,
 }
 
+#[macro_export]
+macro_rules! emit_n {
+    ($emitter:ident, $( $x:expr ),*) => {
+        $(
+            $emitter.bytecode.push($x);
+        )*
+    };
+}
+
 impl Emitter {
     pub fn new() -> Emitter {
         Emitter {
@@ -47,28 +56,6 @@ impl Emitter {
                 string_count: 0,
             },
         }
-    }
-
-    pub fn write_1(&mut self, one: u16) {
-        self.bytecode.push(one);
-    }
-
-    pub fn write_2(&mut self, one: u16, two: u16) {
-        self.bytecode.push(one);
-        self.bytecode.push(two);
-    }
-
-    pub fn write_3(&mut self, one: u16, two: u16, three: u16) {
-        self.bytecode.push(one);
-        self.bytecode.push(two);
-        self.bytecode.push(three);
-    }
-
-    pub fn write_4(&mut self, one: u16, two: u16, three: u16, four: u16) {
-        self.bytecode.push(one);
-        self.bytecode.push(two);
-        self.bytecode.push(three);
-        self.bytecode.push(four);
     }
 
     fn next_id(&mut self) -> u16 {
@@ -134,7 +121,7 @@ impl Emitter {
     }
 
     pub fn prepare_main(&mut self) -> FuncValue {
-        self.write_1(OP_RETURN_FROM_VM);
+        emit_n!(self, OP_RETURN_FROM_VM);
 
         FuncValue {
             bytecode: self.bytecode.split_off(0),
