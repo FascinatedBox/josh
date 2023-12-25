@@ -26,9 +26,9 @@ impl Interpreter {
             eval_stmt(&mut emitter, s);
         }
 
-        let main_func = emitter.prepare_main();
-        let mut vm = Vm::new(main_func);
+        let mut vm = Vm::new();
 
+        vm.load_function(emitter.prepare_main());
         vm.exec();
     }
 }

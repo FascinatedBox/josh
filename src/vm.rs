@@ -1,5 +1,6 @@
 use opcodes::*;
 use std::process::Command;
+use std::ptr;
 use value::*;
 
 macro_rules! arith_op {
@@ -23,33 +24,51 @@ pub struct VmFrame {
 pub struct Vm {
     pub regs: Vec<VmValue>,
     pub call_stack: Vec<VmFrame>,
-    pub current_frame: VmFrame,
-    pub bytecode_pos: u16,
+    pub code: *const u16,
+    pub numbers: *const i64,
+    pub strings: *const String,
 }
 
 impl Vm {
-    pub fn new(main_func: FuncValue) -> Vm {
+    pub fn new() -> Vm {
         Vm {
             regs: Vec::new(),
             call_stack: Vec::new(),
-            current_frame: VmFrame {
-                code_pos: 0,
-                func: main_func,
-            },
-            bytecode_pos: 0,
+            code: ptr::null(),
+            strings: ptr::null(),
+            numbers: ptr::null(),
         }
+    }
+
+    #[inline]
+    fn next_op(&mut self) -> u16 {
+        unsafe {
+            let result = *self.code;
+            self.code = self.code.add(1);
+            result
+        }
+    }
+
+    #[inline]
+    fn number_at(&self, index: u16) -> i64 {
+        unsafe { *self.numbers.offset(index as isize) }
+    }
+
+    #[inline]
+    fn string_at(&self, index: u16) -> String {
+        unsafe { (*self.strings.offset(index as isize)).clone() }
     }
 
     fn exec_command(&mut self) {
         let count = self.next_op() - 1;
-        let idx = self.next_op() as usize;
-        let mut cmd = Command::new(&self.current_frame.func.strings[idx]);
+        let idx = self.next_op();
+        let mut cmd = Command::new(self.string_at(idx));
         let mut args: Vec<String> = Vec::new();
 
         for _i in 0..count {
-            let j = self.next_op() as usize;
-            let s = &self.current_frame.func.strings[j];
-            args.push(s.to_string());
+            let j = self.next_op();
+            let s = self.string_at(j);
+            args.push(s);
         }
 
         let child_result = cmd.args(args).spawn();
@@ -62,17 +81,23 @@ impl Vm {
         }
     }
 
-    fn next_op(&mut self) -> u16 {
-        let result = self.current_frame.func.bytecode[self.bytecode_pos as usize];
-
-        self.bytecode_pos += 1;
-        result
+    pub fn load_function(&mut self, f: FuncValue) {
+        self.call_stack.push(VmFrame {
+            func: f,
+            code_pos: 0,
+        })
     }
 
     pub fn exec(&mut self) {
         for _i in 0..=10 {
             self.regs.push(VmValue::VmEmpty);
         }
+
+        let func = &self.call_stack.last().unwrap().func;
+
+        self.code = func.bytecode.as_ptr();
+        self.strings = func.strings.as_ptr();
+        self.numbers = func.numbers.as_ptr();
 
         loop {
             let op = self.next_op();
@@ -90,7 +115,7 @@ impl Vm {
                 OP_LOAD_INTEGER => {
                     let num_pos = self.next_op();
                     let storage_id = self.next_op() as usize;
-                    let num = self.current_frame.func.numbers[num_pos as usize];
+                    let num = self.number_at(num_pos);
 
                     self.regs[storage_id as usize] = VmValue::VmInteger(num);
                 }
