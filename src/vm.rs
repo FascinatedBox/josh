@@ -119,6 +119,13 @@ impl Vm {
 
                     self.regs[storage_id as usize] = VmValue::VmInteger(num);
                 }
+                OP_LOAD_STRING => {
+                    let num_pos = self.next_op();
+                    let storage_id = self.next_op() as usize;
+                    let num = self.string_at(num_pos);
+
+                    self.regs[storage_id as usize] = VmValue::VmString(num);
+                }
                 OP_PLUS => {
                     self.exec();
                     arith_op!(self, bytecode, pos, +);

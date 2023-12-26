@@ -16,4 +16,5 @@ pub enum Token {
     Newline,
     Number(i64),
     Plus,
+    String(String),
 }

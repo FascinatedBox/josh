@@ -17,6 +17,7 @@ fn expr_power(parser: &mut ParseState, min_power: u8) -> Expr {
 
     let mut left = match spanned_left.kind {
         Token::Number(n) => Expr::Number(n),
+        Token::String(s) => Expr::String(s),
         t => panic!("Invalid token: {:?}", t),
     };
 

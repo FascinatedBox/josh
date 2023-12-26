@@ -8,6 +8,7 @@ pub struct FuncValue {
 #[derive(Clone)]
 pub enum VmValue {
     VmInteger(i64),
+    VmString(String),
     VmEmpty,
 }
 

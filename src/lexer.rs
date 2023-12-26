@@ -44,6 +44,25 @@ impl Lexer {
         result
     }
 
+    fn scan_string(&mut self, start: &usize) -> Token {
+        let mut offset = *start + 1;
+
+        loop {
+            let ch = self.bytes[offset];
+
+            if ch == b'"' {
+                break;
+            }
+
+            offset += 1
+        }
+
+        let s = String::from(&self.text[*start + 1..offset]);
+
+        self.offset = offset + 1;
+        Token::String(s)
+    }
+
     pub fn advance(&mut self, token: &SpannedToken) {
         self.offset = (token.start + token.len) as usize;
     }
@@ -84,6 +103,9 @@ impl Lexer {
                 '0'..='9' => {
                     self.offset += 1;
                     tok = Token::Number((ch - b'0') as i64);
+                }
+                '"' => {
+                    tok = self.scan_string(&start);
                 }
                 '/' => {
                     self.offset += 1;
