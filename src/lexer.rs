@@ -1,6 +1,13 @@
 use lexer_data::IS_IDENT_TABLE;
 use token::{SpannedToken, Token};
 
+macro_rules! make_one_char_token {
+    ($self:ident, $tok:ident, $token:expr) => {
+        $self.offset += 1;
+        $tok = $token;
+    };
+}
+
 pub struct Lexer {
     bytes: Vec<u8>,
     text: String,
@@ -128,8 +135,7 @@ impl Lexer {
                     tok = Token::Plus;
                 }
                 '\n' => {
-                    self.offset += 1;
-                    tok = Token::Newline;
+                    make_one_char_token!(self, tok, Token::Newline);
                 }
                 _ => (),
             }
