@@ -8,7 +8,12 @@ pub struct Scanner {
 
 impl Scanner {
     pub fn new(text: String) -> Self {
-        let bytes = text.as_bytes().to_vec();
+        let mut bytes = text.as_bytes().to_vec();
+
+        /* Prevent reading too far if no ending newline. */
+        if bytes[bytes.len()-1] != b'\n' {
+            bytes.push(b'\n');
+        }
 
         Self {
             bytes: bytes,
