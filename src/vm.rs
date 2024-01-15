@@ -1,5 +1,6 @@
 use crate::opcode::*;
 use crate::value::FuncValue;
+use std::env;
 use std::process::Command;
 use std::ptr;
 
@@ -40,7 +41,18 @@ impl Vm {
         unsafe { (*self.strings.offset(index as isize)).clone() }
     }
 
+    fn exec_builtin_cd(&mut self, args: &Vec<String>) {
+        // todo: Make sure this is well-formed, also check for failing to cd.
+        let target = &args[0];
+        let _ = env::set_current_dir(target);
+    }
+
     fn cmd_exec(&mut self, name: &String, args: &Vec<String>) {
+        if name.len() == 2 && name == "cd" {
+            self.exec_builtin_cd(&args);
+            return;
+        }
+
         let child = Command::new(name).args(args).spawn();
 
         match child {
