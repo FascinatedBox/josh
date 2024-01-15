@@ -46,13 +46,13 @@ impl Scanner {
         let tok;
 
         match ch {
-            'a'..='z' | 'A'..='Z' | '_' | '-' => {
+            'a'..='z' | 'A'..='Z' | '_' | '-' | '.' => {
                 loop {
                     self.offset += 1;
                     ch = self.bytes[self.offset] as char;
 
                     match ch {
-                        'a'..='z' | 'A'..='Z' | '_' | '-' => continue,
+                        'a'..='z' | 'A'..='Z' | '_' | '-' | '.' => continue,
                         _ => break,
                     }
                 }
