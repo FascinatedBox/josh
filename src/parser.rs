@@ -12,8 +12,6 @@ impl Parser {
     pub fn new(s: Scanner) -> Self {
         let mut keywords = HashMap::from([("var", 1)]);
 
-        keywords.insert("var", 1);
-
         Self {
             keywords: keywords,
             scanner: s,
