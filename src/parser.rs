@@ -36,7 +36,14 @@ impl Parser {
 
         words.push(Expr::String(first_word.into()));
 
-        // todo: the other words
+        loop {
+            let token = self.scanner.next_command_arg();
+
+            match token.kind {
+                Token::Identifier => words.push(Expr::String(self.scanner.text_for(&token))),
+                Token::Newline | Token::EndOfFile => break,
+            }
+        }
 
         Stmt::Expr(Expr::Command(words))
     }

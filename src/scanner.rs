@@ -34,6 +34,51 @@ impl Scanner {
         }
     }
 
+    pub fn next_command_arg(&mut self) -> SpannedToken {
+        let mut ch = self.bytes[self.offset] as char;
+
+        while ch == ' ' || ch == '\t' {
+            self.offset += 1;
+            ch = self.bytes[self.offset] as char;
+        }
+
+        let start = self.offset;
+        let tok;
+
+        match ch {
+            'a'..='z' | 'A'..='Z' | '_' | '-' => {
+                loop {
+                    self.offset += 1;
+                    ch = self.bytes[self.offset] as char;
+
+                    match ch {
+                        'a'..='z' | 'A'..='Z' | '_' | '-' => continue,
+                        _ => break,
+                    }
+                }
+
+                tok = Token::Identifier;
+            }
+            '\n' => {
+                if self.offset != self.bytes.len() - 1 {
+                    self.offset += 1;
+                    tok = Token::Newline;
+                } else {
+                    tok = Token::EndOfFile;
+                }
+            }
+            _ => {
+                panic!("Scanner.next_command_arg case {} not handled.", ch as u8);
+            }
+        }
+
+        SpannedToken {
+            kind: tok,
+            start: start as u32,
+            len: (self.offset - start) as u32,
+        }
+    }
+
     pub fn next(&mut self) -> SpannedToken {
         let mut ch = self.bytes[self.offset] as char;
 
