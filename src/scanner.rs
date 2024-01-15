@@ -54,8 +54,13 @@ impl Scanner {
                 tok = Token::Identifier;
             }
             '\n' => {
-                self.offset += 1;
-                tok = Token::Newline;
+                if self.offset != self.bytes.len() - 1 {
+                    self.offset += 1;
+                    tok = Token::Newline;
+                }
+                else {
+                    tok = Token::EndOfFile;
+                }
             }
             _ => {
                 panic!("Scanner.next case {} not handled.", ch as u8);

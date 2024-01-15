@@ -63,7 +63,7 @@ impl Parser {
                 Token::Identifier => {
                     result.push(self.parse_identifier(token));
                 }
-                Token::Newline => break,
+                Token::Newline => continue,
                 Token::EndOfFile => break,
             }
         }
