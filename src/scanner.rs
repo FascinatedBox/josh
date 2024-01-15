@@ -11,7 +11,7 @@ impl Scanner {
         let mut bytes = text.as_bytes().to_vec();
 
         /* Prevent reading too far if no ending newline. */
-        if bytes[bytes.len()-1] != b'\n' {
+        if bytes[bytes.len() - 1] != b'\n' {
             bytes.push(b'\n');
         }
 
@@ -36,6 +36,12 @@ impl Scanner {
 
     pub fn next(&mut self) -> SpannedToken {
         let mut ch = self.bytes[self.offset] as char;
+
+        while ch == ' ' || ch == '\t' {
+            self.offset += 1;
+            ch = self.bytes[self.offset] as char;
+        }
+
         let start = self.offset;
         let tok;
 
@@ -66,8 +72,7 @@ impl Scanner {
                 if self.offset != self.bytes.len() - 1 {
                     self.offset += 1;
                     tok = Token::Newline;
-                }
-                else {
+                } else {
                     tok = Token::EndOfFile;
                 }
             }
@@ -75,8 +80,7 @@ impl Scanner {
                 if self.offset != self.bytes.len() - 1 {
                     self.offset += 1;
                     tok = Token::Newline;
-                }
-                else {
+                } else {
                     tok = Token::EndOfFile;
                 }
             }
