@@ -53,6 +53,24 @@ impl Scanner {
 
                 tok = Token::Identifier;
             }
+            '#' => {
+                loop {
+                    self.offset += 1;
+                    ch = self.bytes[self.offset] as char;
+
+                    if ch == '\n' {
+                        break;
+                    }
+                }
+
+                if self.offset != self.bytes.len() - 1 {
+                    self.offset += 1;
+                    tok = Token::Newline;
+                }
+                else {
+                    tok = Token::EndOfFile;
+                }
+            }
             '\n' => {
                 if self.offset != self.bytes.len() - 1 {
                     self.offset += 1;
